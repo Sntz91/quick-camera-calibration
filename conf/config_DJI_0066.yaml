@@ -1,0 +1,18 @@
+perspective_view:
+  fname_img: '/Users/tobias/ziegleto/data/5Safe/vup/homography_evaluation/data/perspective_views/DJI_0066.JPG'
+  fname_val_pts: '/Users/tobias/ziegleto/data/5Safe/vup/homography_evaluation/annotations/DJI_0066_blue.txt'
+  fname_ref_pts: '/Users/tobias/ziegleto/data/5Safe/vup/homography_evaluation/annotations/DJI_0066_white.txt'
+  fname_fov_pts: '/Users/tobias/ziegleto/data/5Safe/vup/homography_evaluation/annotations/DJI_0066_fov_pts.txt'
+  fname_K: '/Users/tobias/ziegleto/data/5Safe/vup/homography_evaluation/data/calibration/mini3.json'
+  angle: -38.7
+  altitude: 7.9
+top_view:
+  fname_img: '/Users/tobias/ziegleto/data/5Safe/vup/homography_evaluation/data/top_view/DJI_0017.JPG'
+  fname_val_pts: '/Users/tobias/ziegleto/data/5Safe/vup/homography_evaluation/annotations/DJI_0017_blue.txt'
+  fname_ref_pts: '/Users/tobias/ziegleto/data/5Safe/vup/homography_evaluation/annotations/DJI_0017_white.txt'
+  scaling_factor: 54.67
+selection:
+  ref_pts: ['w6', 'w7', 'w19', 'w20', 'w21', 'w22', 'w23', 'w24', 'w25', 'w26', 'w27']
+  val_pts: ['b18', 'b19', 'b21', 'b22', 'b20', 'b27', 'b28', 'b29', 'b30', 'b31', 'b32', 'b33', 'b34']
+output:
+  dir: 'out/DJI_0066.JPG'

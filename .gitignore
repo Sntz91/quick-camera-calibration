@@ -1,0 +1,5 @@
+out/**.JPG
+out/statistics/**.jpg
+**/.DS_Store
+**/__pycache__/**
+
