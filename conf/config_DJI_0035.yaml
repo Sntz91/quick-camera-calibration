@@ -1,15 +1,15 @@
 perspective_view:
-  fname_img: '/Users/tobias/ziegleto/data/5Safe/vup/homography_evaluation/data/perspective_views/DJI_0035.JPG'
-  fname_val_pts: '/Users/tobias/ziegleto/data/5Safe/vup/homography_evaluation/annotations/DJI_0035_blue.txt'
-  fname_ref_pts: '/Users/tobias/ziegleto/data/5Safe/vup/homography_evaluation/annotations/DJI_0035_white.txt'
-  fname_fov_pts: '/Users/tobias/ziegleto/data/5Safe/vup/homography_evaluation/annotations/DJI_0035_fov_pts.txt'
-  fname_K: '/Users/tobias/ziegleto/data/5Safe/vup/homography_evaluation/data/calibration/mini3.json'
+  fname_img: '/home/ziegleto/ziegleto/data/5Safe/vup/homography_evaluation/data/perspective_views/DJI_0035.JPG'
+  fname_val_pts: '/home/ziegleto/ziegleto/data/5Safe/vup/homography_evaluation/annotations/DJI_0035_blue.txt'
+  fname_ref_pts: '/home/ziegleto/ziegleto/data/5Safe/vup/homography_evaluation/annotations/DJI_0035_white.txt'
+  fname_fov_pts: '/home/ziegleto/ziegleto/data/5Safe/vup/homography_evaluation/annotations/DJI_0035_fov_pts.txt'
+  fname_K: '/home/ziegleto/ziegleto/data/5Safe/vup/homography_evaluation/data/calibration/mini3.json'
   angle: -43.0
   altitude: 10.4
 top_view:
-  fname_img: '/Users/tobias/ziegleto/data/5Safe/vup/homography_evaluation/data/top_view/DJI_0017.JPG'
-  fname_val_pts: '/Users/tobias/ziegleto/data/5Safe/vup/homography_evaluation/annotations/DJI_0017_blue.txt'
-  fname_ref_pts: '/Users/tobias/ziegleto/data/5Safe/vup/homography_evaluation/annotations/DJI_0017_white.txt'
+  fname_img: '/home/ziegleto/ziegleto/data/5Safe/vup/homography_evaluation/data/top_view/DJI_0017.JPG'
+  fname_val_pts: '/home/ziegleto/ziegleto/data/5Safe/vup/homography_evaluation/annotations/DJI_0017_blue.txt'
+  fname_ref_pts: '/home/ziegleto/ziegleto/data/5Safe/vup/homography_evaluation/annotations/DJI_0017_white.txt'
   scaling_factor: 54.67
 selection:
   ref_pts: ['w19', 'w21', 'w25', 'w20', 'w18', 'w7', 'w5', 'w4', 'w6', 'w3', 'w1', 'w2', 'w15', 'w13', 'w14', 'w17']

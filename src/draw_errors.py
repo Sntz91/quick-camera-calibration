@@ -5,8 +5,8 @@ from lib.reference_points import ReferencePoints
 
 # Load Images
 imagename = 'DJI_0026'
-fname_img_pv = f'/Users/tobias/data/5Safe/vup/homography_evaluation/data/perspective_views/{imagename}.JPG'
-fname_img_tv = '/Users/tobias/data/5Safe/vup/homography_evaluation/data/top_view/DJI_0017.JPG'
+fname_img_pv = f'/home/ziegleto/ziegleto/data/5Safe/vup/homography_evaluation/data/perspective_views/{imagename}.JPG'
+fname_img_tv = '/home/ziegleto/ziegleto/data/5Safe/vup/homography_evaluation/data/top_view/DJI_0017.JPG'
 
 img_pv = cv2.imread(fname_img_pv)
 img_pv = cv2.cvtColor(img_pv, cv2.COLOR_BGR2RGB)
