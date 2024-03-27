@@ -2,7 +2,9 @@ from calculate_statistics_composition import read_data, filter_bad_hulls
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
-plt.style.use('dark_background')
+import scienceplots
+# plt.style.use('dark_background')
+plt.style.use(['science', 'grid'])
 
 
 def main():
@@ -10,11 +12,15 @@ def main():
     img = 'DJI_0026'
     data_full = get_data(img)
     data_good = get_data(img, quality='good')
+    # print('yo')
     # data_bad = get_data(img, quality='bad')
     # Q1: Is there a difference over ks?
     # a) Box plot
     # create_boxplots('out/boxplots', data_full, data_good)
+    # create_boxplots_new()
 
+    # Worst best: 
+   
     # b) P-Value Differences
     # print_p_value_overview(data_full, data_good)
 
@@ -24,8 +30,26 @@ def main():
     # Q2: Is there a difference within each k?
     # Already answered?
 
-    print_stat(data_full, data_good, np.var)
+    # print_stat(data_full, data_good, np.var)
 
+def create_boxplots_new():
+    img = 'DJI_0026'
+    data_full = get_data(img)
+    data_good = get_data(img, quality='good')
+
+    fig, axs = plt.subplots(2, 1)
+    fig.set_size_inches(8, 8)
+    axs[0] = create_boxplot(axs[0], data_full[:-1])
+    axs[1] = create_boxplot(axs[1], data_good[:-1])
+    axs[0].set_xlim(0, 25)
+    axs[1].set_xlim(0, 25)
+    axs[0].set_title("All Validation Points")
+    axs[1].set_title("Only Good Validation Points")
+    axs[1].set_ylabel('k')
+    axs[1].set_xlabel('mean error per experiment [cm]')
+    axs[0].axvline(x=6.95, linewidth=1.5, color='black', linestyle='--')
+    axs[1].axvline(x=7.06, linewidth=1.5, color='black', linestyle='--')
+    fig.savefig('out/boxplots.png', dpi=300)
 
 def get_data(img_name, quality=None):
     raw_data = read_data(img_name)
@@ -78,14 +102,18 @@ def bootstrap(data_A, data_B, N=100000, fn=np.mean, abs=True):
 
 
 def create_boxplot(ax, data, outliers=False):
-    labels = ['4', '5', '6', '7', '8', '9']
+    labels = ['4', '5', '6', '7', '8']
     ax.boxplot(
         data,
         labels=labels,
-        showfliers=outliers
+        showfliers=outliers,
+        vert=False,
+        patch_artist=True,
+        boxprops=dict(facecolor="lightgray"),
+        medianprops=dict(color="black", linewidth=1.5)
     )
-    #ax.xlabel('k')
-    #ax.ylabel('mean error per experiment')
+    # ax.set_xlabel('k')
+    # ax.set_ylabel('mean error per experiment [cm]')
     return ax
 
 

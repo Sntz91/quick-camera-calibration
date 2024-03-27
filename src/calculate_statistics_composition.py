@@ -2,24 +2,254 @@ import cv2
 import re
 import numpy as np
 import pandas as pd
+import scipy.stats as st
 import matplotlib.pyplot as plt
+import scienceplots
 from stat_data import (
     create_data,
     read_data,
     filter_bad_hulls
 )
 
+def overall_results():
+    images = ['DJI_0026', 'DJI_0029', 'DJI_0032', 'DJI_0035', 'DJI_0038', 'DJI_0045', 'DJI_0049', 'DJI_0053', 'DJI_0061', 'DJI_0066', 'DJI_0067', 'DJI_0078']
+    for img in images:
+        df = read_data(img) 
+        max_val = df.loc[df['comb'] == max(df['comb'])]
+        # print(max_val)
+        print(img)
+        print('---------')
+        print(f'mean error: {np.mean(max_val["error"]):.2f}')
+        print(f'var error: {np.var(max_val["error"]):.2f}')
+        print(f'sample size: {len(max_val["error"])}')
+        # print(max_val)
+        print()
 
-def main():
-    img = 'DJI_0029'
-    # create_data(img)
+def plot_worst_best():
+    img = 'DJI_0026'
     df = read_data(img)
     df = filter_bad_hulls(df)
+
+    fig, axs = plt.subplots(5, 8)
+    fig.set_size_inches(20, 9.5)
+    # Bests
+    for k in range(4, 9):
+        bests = get_n_best_experiments(df.loc[df['comb']==k], 4)
+
+        ax = axs[k-4, 0]
+        best = bests.iloc[0]
+        plot_experiment_ax(ax, df, best['comb'], best['exp'])
+
+        ax = axs[k-4, 1]
+        best = bests.iloc[1]
+        plot_experiment_ax(ax, df, best['comb'], best['exp'])
+
+        ax = axs[k-4, 2]
+        best = bests.iloc[2]
+        plot_experiment_ax(ax, df, best['comb'], best['exp'])
+
+        ax = axs[k-4, 3]
+        best = bests.iloc[3]
+        plot_experiment_ax(ax, df, best['comb'], best['exp'])
+
+    plt.tight_layout()
+
+    # Worsts
+    for k in range(4, 9):
+        worsts = get_n_worst_experiments(df.loc[df['comb']==k], 4)
+
+        ax = axs[k-4, 4]
+        best = worsts.iloc[0]
+        plot_experiment_ax(ax, df, best['comb'], best['exp'])
+
+        ax = axs[k-4, 5]
+        best = worsts.iloc[1]
+        plot_experiment_ax(ax, df, best['comb'], best['exp'])
+
+        ax = axs[k-4, 6]
+        best = worsts.iloc[2]
+        plot_experiment_ax(ax, df, best['comb'], best['exp'])
+
+        ax = axs[k-4, 7]
+        best = worsts.iloc[3]
+        plot_experiment_ax(ax, df, best['comb'], best['exp'])
+    
+    plt.tight_layout()
+    plt.savefig('out/worst_best.png', dpi=300)
+        
+
+
+def hull_len_3():
+    # ERROR 3 PT HULL
+    img = 'DJI_0026'
+    df = read_data(img)
+    df = df.loc[df['comb'] == 4]
+    df_bad_hull = df[df.hull_len <= 3]
+    df_good_hull = df[df.hull_len > 3]
+
+    bad_hull_exps = df_bad_hull.groupby(['comb', 'exp']) \
+               .agg(mean_error=('error', 'mean')) \
+               .sort_values(by='mean_error').reset_index()
+    good_hull_exps = df_good_hull.groupby(['comb', 'exp']) \
+               .agg(mean_error=('error', 'mean')) \
+               .sort_values(by='mean_error').reset_index()
+    bad_hull_results = bad_hull_exps['mean_error'].to_numpy()
+    good_hull_results = good_hull_exps['mean_error'].to_numpy()
+    print(good_hull_results)
+    plt.boxplot(
+        [bad_hull_results, good_hull_results], 
+        labels=['hull 3', 'hull 4'], 
+        showfliers=False,
+        vert=False,
+        patch_artist=True,
+        boxprops=dict(facecolor="lightgray"),
+        medianprops=dict(color="black", linewidth=1.5)
+    )
+    plt.show()
+
+def main():
+    # hull_len_3() 
+    # hull_size_error()
+    best_worst_smallers()
+
+    # print(len(df_))
+    # worst = get_n_worst_experiments2(df, 10)
+    # print(worst)
+
+    # plot_experiment(df, 5, 4, save=False)
+    # results = get_result_table(df)
+    # print(results)
+
+def best_worst_smallers():
+    img = 'DJI_0026'
+    df = read_data(img)
+    df = filter_bad_hulls(df)
+    df = df.loc[df['comb'] == 4]
+    exps = df.groupby(['comb', 'exp']) \
+           .agg(
+               mean_error=('error', 'mean'),
+               area=('hull_area', 'max'), # only one 
+            ) \
+           .sort_values(by='mean_error').reset_index()
+    areas = exps['area'].values
+    # errors = exps['mean_error'].values
+    threshold = max(areas) / 2
+
+    exps['smaller'] = exps['area'] <= threshold
+    smallers = exps.loc[exps['smaller'] == True].sort_values(by='mean_error')
+    losers = smallers.iloc[-10:]
+    winners = smallers.iloc[:10]
+    print(losers)
+
+    for index, row in losers.iterrows():
+        plot_experiment(df, row['comb'], row['exp'], False)
+        plt.cla()
+
+
+    
+
+    
+
+
+
+def hull_size_error():
+    # ERROR WRT HULL SIZE
+    import matplotlib as mpl
+    # overall_results()
+    imgs = ['DJI_0026', 'DJI_0029', 'DJI_0032', 'DJI_0035']#, 'DJI_0038', 'DJI_0045', 'DJI_0049', 'DJI_0053', 'DJI_0061', 'DJI_0066', 'DJI_0067', 'DJI_0078']
+    colors = ['red', 'green', 'yellow']
+    colors = mpl.colormaps['Dark2'].colors
+    areas = []
+    ov_errors = []
+    ov_colors = []
+    for i, img in enumerate(imgs):
+        print(f'IMG: {img}')
+        # Get Data
+        df = read_data(img)
+        df = filter_bad_hulls(df)
+        df = df.loc[df['comb'] == 4]
+
+        groups = df.groupby(['comb', 'exp']) \
+               .agg(
+                   mean_error=('error', 'mean'),
+                   area=('hull_area', 'max'), # only one 
+                ) \
+               .sort_values(by='mean_error').reset_index()
+        area = groups['area'].values
+        errors = groups['mean_error'].values
+        # plt.scatter(x=groups['area'], y=groups['mean_error'])
+        # plt.show()
+        # plt.cla()
+        areas += area.tolist()
+        ov_errors += errors.tolist()
+
+        # MIN AREA, MAX AREA?
+
+        for _ in range(len(area)):
+            ov_colors.append(colors[i])
+    
+        # Needs Gaussian, linear
+        # corr, _ = st.pearsonr(area, errors)
+        # print(f'Pearsons correlation: {corr:.3f}')
+
+        # Nonlinear, nongaussian ok, monotonic
+        # corr, _ = st.spearmanr(area, errors)
+        # print(f'Spearmans correlation: {corr:.3f}')
+        # Get rid of worst 
+        # corr, _ = st.spearmanr(area[:-30], errors[:-30])
+        # print(f'Spearmans correlation: {corr:.3f}')
+    areas = np.array(areas)
+    print(f'min area: {min(areas)}')
+    print(f'max area: {max(areas)}')
+    print(f'half (max) area: {max(areas)/2}')
+    threshold = max(areas) / 2
+    nr_overall = len(areas)
+    biggers = np.argwhere(areas > threshold)
+    smallers = np.argwhere(areas <= threshold)
+    print(f'nr overall {nr_overall}, nr_bigger {len(biggers)}, nr_smaller {len(smallers)}')
+    biggers_error = np.take(ov_errors, biggers, 0).squeeze()
+    smallers_error = np.take(ov_errors, smallers, 0).squeeze()
+    print(biggers_error)
+
+
+    plt.scatter(x=areas[:-20], y=ov_errors[:-20], c=ov_colors[:-20], alpha=0.5)
+    plt.show()
+    plt.cla()
+
+    plt.boxplot(
+        [biggers_error, smallers_error],
+        labels=['biggers', 'smallers'],
+        showfliers=False,
+        vert=False,
+        patch_artist=True,
+        boxprops=dict(facecolor="lightgray"),
+        medianprops=dict(color="black", linewidth=1.5)
+    )
+    plt.show()
+    plt.cla()
+
+    # WIE SCHAUTS AUS NACHDEM ICH 3 hull weg hab und nur noch biggers?!
+    # TODO
+    
+    # Woher kommen die outlier, denn die smallers sind ja nicht alle schlecht?
+    # 1. Plot some of the bad smallers and the good smallers?
+
+    
+
+        # NOT NECESSARILY BUT WHEN OUTLIER THEN SMALL... 
+
+    
     # df = df.loc[df['quality'] == 'good']
+    # fig, ax = plt.subplots()
+    # fig.set_size_inches(5, 5)
+    # plot_experiment_ax(ax, df, 8, 0)
+    # plt.tight_layout()
+    # plt.savefig(f'out/{img}_results.png', dpi=300)
+
 
     # plot_winners_losers(df, 'out/worst_best')
     # for i in range(100):
-    plot_experiment(df, 10, 0, save=True)
+    # plot_experiment(df, 10, 0, save=True)
 
     # save_results(df, img)
     # results = get_result_table(df)
@@ -30,6 +260,11 @@ def main():
     # losers = get_n_worst_experiments(df, 10)
     # print(losers)
 
+def get_n_worst_experiments2(df, n):
+    groups = df.groupby(['comb', 'exp', 'hull_len']) \
+               .agg(mean_error=('error', 'mean')) \
+               .sort_values(by='mean_error').reset_index()
+    return groups.iloc[-n:]
 
 def get_n_worst_experiments(df, n):
     groups = df.groupby(['comb', 'exp']) \
@@ -72,7 +307,7 @@ def plot_experiment_ax(ax, df, comb, exp):
 
     # Plot Reference Points
     ref_pts = exp_df.ref_pts.values[0]
-    ax.scatter(ref_pts[:, 0], ref_pts[:, 1], color='white', alpha=0.4, s=80)
+    ax.scatter(ref_pts[:, 0], ref_pts[:, 1], color='white', alpha=0.4, s=100)
 
     # Plot Hull
     hull = exp_df.hull.values[0]
@@ -81,7 +316,7 @@ def plot_experiment_ax(ax, df, comb, exp):
     # Plot Validation Points
     plot_validation_points(ax, exp_df)
 
-    t = ax.text(220, 150, f'error: {mean_error:.2f}', color='white')
+    t = ax.text(220, 100, f'error: {mean_error:.2f}', color='white')
     t.set_bbox(dict(facecolor='black', alpha=0.5, edgecolor='black'))
     ax.axis('off')
     return ax
@@ -91,12 +326,13 @@ def plot_validation_points(ax, exp_df):
     for _, row in exp_df.iterrows():
         color = 'green' if row.quality == 'good' else 'red'
         ax.scatter(row.val_pt_x, row.val_pt_y, c=color, s=80, alpha=0.6)
-        ax.text(row.val_pt_x, row.val_pt_y, f'E:{row.error:.2f}cm')
+        t = ax.text(row.val_pt_x, row.val_pt_y+50, f'{row.error:.2f}', color='black')
+        # t.set_bbox(dict(facecolor='black', alpha=0.5, edgecolor='black'))
 
 
 def plot_hull(ax, hull):
     _hull = np.concatenate((hull, [hull[0, :]]))
-    ax.plot(_hull[:, 0], _hull[:, 1], color='white', lw=2.0)
+    ax.plot(_hull[:, 0], _hull[:, 1], color='white', lw=2.0, alpha=0.6)
 
 
 def get_result_table(df):
@@ -167,8 +403,8 @@ def plot_winners_losers(df, filename):
     fig, axs = plt.subplots(6, 8)
     fig.set_size_inches(25, 15)
     for k in range(4, 10):
-        losers = get_n_worst_experiments(df, k, 4)
-        winners = get_n_best_experiments(df, k, 4)
+        losers = get_n_worst_experiments(df.loc[df['comb']==k], 4)
+        winners = get_n_best_experiments(df.loc[df['comb']==k], 4)
 
         axs[k-4, 0].axis('on')
         axs[k-4, 0].set_ylabel(f'k={k}')
@@ -192,7 +428,7 @@ def plot_winners_losers(df, filename):
 
 
 if __name__ == '__main__':
-    plt.style.use('dark_background')
+    plt.style.use(['science'])
     pd.set_option("display.precision", 2)
     pd.set_option("display.max_rows", None)
     main()
