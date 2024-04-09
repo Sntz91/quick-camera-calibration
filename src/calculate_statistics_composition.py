@@ -81,11 +81,14 @@ def plot_worst_best():
 
 def hull_len_3():
     # ERROR 3 PT HULL
-    img = 'DJI_0026'
+    img = 'DJI_0029'
     df = read_data(img)
     df = df.loc[df['comb'] == 4]
+    g_df = df.loc[df['quality'] == 'good']
     df_bad_hull = df[df.hull_len <= 3]
     df_good_hull = df[df.hull_len > 3]
+    g_df_bad_hull = g_df[g_df.hull_len <= 3]
+    g_df_good_hull = g_df[g_df.hull_len > 3]
 
     bad_hull_exps = df_bad_hull.groupby(['comb', 'exp']) \
                .agg(mean_error=('error', 'mean')) \
@@ -95,22 +98,50 @@ def hull_len_3():
                .sort_values(by='mean_error').reset_index()
     bad_hull_results = bad_hull_exps['mean_error'].to_numpy()
     good_hull_results = good_hull_exps['mean_error'].to_numpy()
-    print(good_hull_results)
-    plt.boxplot(
+
+    g_bad_hull_exps = g_df_bad_hull.groupby(['comb', 'exp']) \
+               .agg(mean_error=('error', 'mean')) \
+               .sort_values(by='mean_error').reset_index()
+    g_good_hull_exps = g_df_good_hull.groupby(['comb', 'exp']) \
+               .agg(mean_error=('error', 'mean')) \
+               .sort_values(by='mean_error').reset_index()
+    g_bad_hull_results = g_bad_hull_exps['mean_error'].to_numpy()
+    g_good_hull_results = g_good_hull_exps['mean_error'].to_numpy()
+
+    fig, axs = plt.subplots(2, 1)
+    fig.set_size_inches(8, 8)
+    axs[0].boxplot(
         [bad_hull_results, good_hull_results], 
-        labels=['hull 3', 'hull 4'], 
+        labels=['$n_{vert}=3$', '$n_{vert}=4$'], 
         showfliers=False,
         vert=False,
         patch_artist=True,
         boxprops=dict(facecolor="lightgray"),
-        medianprops=dict(color="black", linewidth=1.5)
+        medianprops=dict(color="black", linewidth=1.5),
+        widths=0.3
     )
+    axs[1].boxplot(
+        [g_bad_hull_results, g_good_hull_results], 
+        labels=['$n_{vert}=3$', '$n_{vert}=4$'], 
+        showfliers=False,
+        vert=False,
+        patch_artist=True,
+        boxprops=dict(facecolor="lightgray"),
+        medianprops=dict(color="black", linewidth=1.5),
+        widths=0.3
+    )
+    # axs[0].set_xlim(0, 25)
+    # axs[1].set_xlim(0, 25)
+    axs[0].set_title("All Validation Points")
+    axs[1].set_title("Only Good Validation Points")
+    axs[1].set_xlabel('mean error per experiment [cm]')
+    # fig.savefig('out/boxplots_hull.png', dpi=300)
     plt.show()
 
 def main():
-    # hull_len_3() 
-    # hull_size_error()
-    best_worst_smallers()
+    hull_len_3() 
+    hull_size_error()
+    # best_worst_smallers()
 
     # print(len(df_))
     # worst = get_n_worst_experiments2(df, 10)
@@ -119,9 +150,10 @@ def main():
     # plot_experiment(df, 5, 4, save=False)
     # results = get_result_table(df)
     # print(results)
+IMG = 'DJI_0029'
 
 def best_worst_smallers():
-    img = 'DJI_0026'
+    img = IMG
     df = read_data(img)
     df = filter_bad_hulls(df)
     df = df.loc[df['comb'] == 4]
@@ -156,18 +188,22 @@ def hull_size_error():
     # ERROR WRT HULL SIZE
     import matplotlib as mpl
     # overall_results()
-    imgs = ['DJI_0026', 'DJI_0029', 'DJI_0032', 'DJI_0035']#, 'DJI_0038', 'DJI_0045', 'DJI_0049', 'DJI_0053', 'DJI_0061', 'DJI_0066', 'DJI_0067', 'DJI_0078']
+    # imgs = ['DJI_0029'] #, 'DJI_0029', 'DJI_0032', 'DJI_0035']#, 'DJI_0038', 'DJI_0045', 'DJI_0049', 'DJI_0053', 'DJI_0061', 'DJI_0066', 'DJI_0067', 'DJI_0078']
+    imgs = [IMG]
     colors = ['red', 'green', 'yellow']
     colors = mpl.colormaps['Dark2'].colors
     areas = []
     ov_errors = []
     ov_colors = []
+    g_areas = []
+    g_ov_errors = []
     for i, img in enumerate(imgs):
         print(f'IMG: {img}')
         # Get Data
         df = read_data(img)
         df = filter_bad_hulls(df)
         df = df.loc[df['comb'] == 4]
+        g_df = df.loc[df['quality'] == 'good']
 
         groups = df.groupby(['comb', 'exp']) \
                .agg(
@@ -175,13 +211,23 @@ def hull_size_error():
                    area=('hull_area', 'max'), # only one 
                 ) \
                .sort_values(by='mean_error').reset_index()
+        g_groups = g_df.groupby(['comb', 'exp']) \
+               .agg(
+                   mean_error=('error', 'mean'),
+                   area=('hull_area', 'max'), # only one 
+                ) \
+               .sort_values(by='mean_error').reset_index()
         area = groups['area'].values
         errors = groups['mean_error'].values
+        g_area = g_groups['area'].values
+        g_errors = g_groups['mean_error'].values
         # plt.scatter(x=groups['area'], y=groups['mean_error'])
         # plt.show()
         # plt.cla()
         areas += area.tolist()
         ov_errors += errors.tolist()
+        g_areas += g_area.tolist()
+        g_ov_errors += g_errors.tolist()
 
         # MIN AREA, MAX AREA?
 
@@ -199,34 +245,69 @@ def hull_size_error():
         # corr, _ = st.spearmanr(area[:-30], errors[:-30])
         # print(f'Spearmans correlation: {corr:.3f}')
     areas = np.array(areas)
+    g_areas = np.array(g_areas)
     print(f'min area: {min(areas)}')
     print(f'max area: {max(areas)}')
     print(f'half (max) area: {max(areas)/2}')
     threshold = max(areas) / 2
+    g_threshold = max(g_areas) / 2
     nr_overall = len(areas)
     biggers = np.argwhere(areas > threshold)
     smallers = np.argwhere(areas <= threshold)
+    g_biggers = np.argwhere(g_areas > g_threshold)
+    g_smallers = np.argwhere(g_areas <= g_threshold)
     print(f'nr overall {nr_overall}, nr_bigger {len(biggers)}, nr_smaller {len(smallers)}')
     biggers_error = np.take(ov_errors, biggers, 0).squeeze()
     smallers_error = np.take(ov_errors, smallers, 0).squeeze()
+    g_biggers_error = np.take(g_ov_errors, g_biggers, 0).squeeze()
+    g_smallers_error = np.take(g_ov_errors, g_smallers, 0).squeeze()
     print(biggers_error)
 
 
-    plt.scatter(x=areas[:-20], y=ov_errors[:-20], c=ov_colors[:-20], alpha=0.5)
+    fig, axs = plt.subplots(2, 1)
+    fig.set_size_inches(8, 8)
+    # fig.suptitle('Error w/o bad hulls wrt Area', fontsize=16)
+    axs[0].scatter(x=areas, y=ov_errors, c='gray', alpha=0.5)
+    # axs[0].set_ylabel('mean error per experiment [cm]')
+    # axs[0].set_xlabel('spanned area of hull')
+    axs[1].scatter(x=g_areas, y=g_ov_errors, c='gray', alpha=0.5)
+    axs[1].set_ylabel('mean error per experiment [cm]')
+    axs[1].set_xlabel('spanned area of hull')
+    axs[0].set_title("All Validation Points")
+    axs[1].set_title("Only Good Validation Points")
+    # fig.savefig('out/scatter_area.png', dpi=300)
     plt.show()
+    # plt.show()
     plt.cla()
 
-    plt.boxplot(
+    fig, axs = plt.subplots(2, 1)
+    fig.set_size_inches(8, 8)
+    # fig.suptitle('Error w/o bad hulls wrt Smaller / Bigger', fontsize=16)
+    axs[0].boxplot(
         [biggers_error, smallers_error],
-        labels=['biggers', 'smallers'],
+        labels=['large', 'small'],
         showfliers=False,
         vert=False,
         patch_artist=True,
         boxprops=dict(facecolor="lightgray"),
         medianprops=dict(color="black", linewidth=1.5)
     )
+    axs[1].boxplot(
+        [g_biggers_error, g_smallers_error],
+        labels=['large', 'small'],
+        showfliers=False,
+        vert=False,
+        patch_artist=True,
+        boxprops=dict(facecolor="lightgray"),
+        medianprops=dict(color="black", linewidth=1.5)
+    )
+    # axs[0].set_xlim(0, 65)
+    # axs[1].set_xlim(0, 65)
+    axs[1].set_xlabel('mean error per experiment [cm]')
+    axs[0].set_title("All Validation Points")
+    axs[1].set_title("Only Good Validation Points")
+    # fig.savefig('out/boxplots_area.png', dpi=300)
     plt.show()
-    plt.cla()
 
     # WIE SCHAUTS AUS NACHDEM ICH 3 hull weg hab und nur noch biggers?!
     # TODO
@@ -428,7 +509,7 @@ def plot_winners_losers(df, filename):
 
 
 if __name__ == '__main__':
-    plt.style.use(['science'])
+    plt.style.use(['science', 'grid'])
     pd.set_option("display.precision", 2)
     pd.set_option("display.max_rows", None)
     main()
